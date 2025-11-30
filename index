@@ -1,0 +1,993 @@
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { ShoppingBasket, DollarSign, XCircle, CheckCircle, RefreshCcw, TrendingUp, User, ShoppingCart, AlertCircle, Trophy } from 'lucide-react';
+
+// --- 遊戲資料庫 (Item Database - 500 Items) ---
+const MARKET_ITEMS = [
+  // --- 原始 1-100 ---
+  { id: 1, icon: "🍎", en: "Apple", ch: "蘋果", price: 2, category: "Fruit" },
+  { id: 2, icon: "🍌", en: "Banana", ch: "香蕉", price: 2, category: "Fruit" },
+  { id: 3, icon: "🍇", en: "Grape", ch: "葡萄", price: 4, category: "Fruit" },
+  { id: 4, icon: "🥕", en: "Carrot", ch: "胡蘿蔔", price: 1, category: "Veg" },
+  { id: 5, icon: "🥦", en: "Broccoli", ch: "花椰菜", price: 3, category: "Veg" },
+  { id: 6, icon: "🥩", en: "Steak", ch: "牛排", price: 15, category: "Meat" },
+  { id: 7, icon: "🍗", en: "Chicken", ch: "雞肉", price: 8, category: "Meat" },
+  { id: 8, icon: "🥚", en: "Egg", ch: "雞蛋", price: 5, category: "Dairy" },
+  { id: 9, icon: "🥛", en: "Milk", ch: "牛奶", price: 4, category: "Dairy" },
+  { id: 10, icon: "🧀", en: "Cheese", ch: "起司", price: 6, category: "Dairy" },
+  { id: 11, icon: "🍞", en: "Bread", ch: "麵包", price: 3, category: "Bakery" },
+  { id: 12, icon: "🥐", en: "Croissant", ch: "可頌", price: 4, category: "Bakery" },
+  { id: 13, icon: "🍪", en: "Cookie", ch: "餅乾", price: 2, category: "Snack" },
+  { id: 14, icon: "🍫", en: "Chocolate", ch: "巧克力", price: 3, category: "Snack" },
+  { id: 15, icon: "🧃", en: "Juice", ch: "果汁", price: 3, category: "Drink" },
+  { id: 16, icon: "🍺", en: "Beer", ch: "啤酒", price: 5, category: "Drink" },
+  { id: 17, icon: "🧴", en: "Shampoo", ch: "洗髮精", price: 12, category: "Daily" },
+  { id: 18, icon: "🧻", en: "Tissue", ch: "衛生紙", price: 8, category: "Daily" },
+  { id: 19, icon: "🧼", en: "Soap", ch: "肥皂", price: 2, category: "Daily" },
+  { id: 20, icon: "🐟", en: "Fish", ch: "魚", price: 10, category: "Meat" },
+  { id: 21, icon: "🍕", en: "Pizza", ch: "披薩", price: 12, category: "Bakery" },
+  { id: 22, icon: "🍔", en: "Burger", ch: "漢堡", price: 8, category: "Bakery" },
+  { id: 23, icon: "🍟", en: "Fries", ch: "薯條", price: 4, category: "Snack" },
+  { id: 24, icon: "🥤", en: "Soda", ch: "汽水", price: 2, category: "Drink" },
+  { id: 25, icon: "🍉", en: "Watermelon", ch: "西瓜", price: 6, category: "Fruit" },
+  { id: 26, icon: "🍋", en: "Lemon", ch: "檸檬", price: 2, category: "Fruit" },
+  { id: 27, icon: "🍅", en: "Tomato", ch: "番茄", price: 2, category: "Veg" },
+  { id: 28, icon: "🥔", en: "Potato", ch: "馬鈴薯", price: 2, category: "Veg" },
+  { id: 29, icon: "🍦", en: "Ice Cream", ch: "冰淇淋", price: 5, category: "Dairy" },
+  { id: 30, icon: "🍰", en: "Cake", ch: "蛋糕", price: 6, category: "Bakery" },
+  { id: 31, icon: "🍓", en: "Strawberry", ch: "草莓", price: 5, category: "Fruit" },
+  { id: 32, icon: "🍒", en: "Cherry", ch: "櫻桃", price: 8, category: "Fruit" },
+  { id: 33, icon: "🍑", en: "Peach", ch: "桃子", price: 4, category: "Fruit" },
+  { id: 34, icon: "🍐", en: "Pear", ch: "梨子", price: 3, category: "Fruit" },
+  { id: 35, icon: "🍍", en: "Pineapple", ch: "鳳梨", price: 5, category: "Fruit" },
+  { id: 36, icon: "🥭", en: "Mango", ch: "芒果", price: 6, category: "Fruit" },
+  { id: 37, icon: "🥥", en: "Coconut", ch: "椰子", price: 4, category: "Fruit" },
+  { id: 38, icon: "🥝", en: "Kiwi", ch: "奇異果", price: 3, category: "Fruit" },
+  { id: 39, icon: "🥑", en: "Avocado", ch: "酪梨", price: 5, category: "Fruit" },
+  { id: 40, icon: "🍈", en: "Melon", ch: "哈密瓜", price: 7, category: "Fruit" },
+  { id: 41, icon: "🌽", en: "Corn", ch: "玉米", price: 2, category: "Veg" },
+  { id: 42, icon: "🌶️", en: "Chili", ch: "辣椒", price: 1, category: "Veg" },
+  { id: 43, icon: "🥒", en: "Cucumber", ch: "小黃瓜", price: 2, category: "Veg" },
+  { id: 44, icon: "🍄", en: "Mushroom", ch: "蘑菇", price: 3, category: "Veg" },
+  { id: 45, icon: "🧅", en: "Onion", ch: "洋蔥", price: 1, category: "Veg" },
+  { id: 46, icon: "🧄", en: "Garlic", ch: "大蒜", price: 1, category: "Veg" },
+  { id: 47, icon: "🍆", en: "Eggplant", ch: "茄子", price: 2, category: "Veg" },
+  { id: 48, icon: "🥬", en: "Lettuce", ch: "生菜", price: 2, category: "Veg" },
+  { id: 49, icon: "🍠", en: "Sweet Potato", ch: "地瓜", price: 2, category: "Veg" },
+  { id: 50, icon: "🎃", en: "Pumpkin", ch: "南瓜", price: 4, category: "Veg" },
+  { id: 51, icon: "🦐", en: "Shrimp", ch: "蝦子", price: 12, category: "Seafood" },
+  { id: 52, icon: "🦞", en: "Lobster", ch: "龍蝦", price: 25, category: "Seafood" },
+  { id: 53, icon: "🦀", en: "Crab", ch: "螃蟹", price: 18, category: "Seafood" },
+  { id: 54, icon: "🦑", en: "Squid", ch: "魷魚", price: 8, category: "Seafood" },
+  { id: 55, icon: "🥓", en: "Bacon", ch: "培根", price: 6, category: "Meat" },
+  { id: 56, icon: "🌭", en: "Hot Dog", ch: "熱狗", price: 4, category: "Meat" },
+  { id: 57, icon: "🍖", en: "Ham", ch: "火腿", price: 7, category: "Meat" },
+  { id: 58, icon: "🍩", en: "Donut", ch: "甜甜圈", price: 3, category: "Bakery" },
+  { id: 59, icon: "🥯", en: "Bagel", ch: "貝果", price: 3, category: "Bakery" },
+  { id: 60, icon: "🥞", en: "Pancake", ch: "鬆餅", price: 5, category: "Bakery" },
+  { id: 61, icon: "🧇", en: "Waffle", ch: "格子鬆餅", price: 5, category: "Bakery" },
+  { id: 62, icon: "🥪", en: "Sandwich", ch: "三明治", price: 4, category: "Bakery" },
+  { id: 63, icon: "🌮", en: "Taco", ch: "塔可餅", price: 5, category: "Bakery" },
+  { id: 64, icon: "🌯", en: "Burrito", ch: "捲餅", price: 6, category: "Bakery" },
+  { id: 65, icon: "🥧", en: "Pie", ch: "派", price: 5, category: "Bakery" },
+  { id: 66, icon: "🍿", en: "Popcorn", ch: "爆米花", price: 4, category: "Snack" },
+  { id: 67, icon: "🍬", en: "Candy", ch: "糖果", price: 1, category: "Snack" },
+  { id: 68, icon: "🍭", en: "Lollipop", ch: "棒棒糖", price: 1, category: "Snack" },
+  { id: 69, icon: "🍮", en: "Pudding", ch: "布丁", price: 2, category: "Snack" },
+  { id: 70, icon: "🍯", en: "Honey", ch: "蜂蜜", price: 8, category: "Snack" },
+  { id: 71, icon: "🥜", en: "Peanut", ch: "花生", price: 3, category: "Snack" },
+  { id: 72, icon: "☕", en: "Coffee", ch: "咖啡", price: 4, category: "Drink" },
+  { id: 73, icon: "🍵", en: "Tea", ch: "茶", price: 3, category: "Drink" },
+  { id: 74, icon: "🍷", en: "Wine", ch: "葡萄酒", price: 15, category: "Drink" },
+  { id: 75, icon: "🍸", en: "Cocktail", ch: "雞尾酒", price: 10, category: "Drink" },
+  { id: 76, icon: "🧋", en: "Bubble Tea", ch: "珍珠奶茶", price: 5, category: "Drink" },
+  { id: 77, icon: "🪥", en: "Toothbrush", ch: "牙刷", price: 3, category: "Daily" },
+  { id: 78, icon: "🦷", en: "Toothpaste", ch: "牙膏", price: 4, category: "Daily" },
+  { id: 79, icon: "🧴", en: "Lotion", ch: "乳液", price: 10, category: "Daily" },
+  { id: 80, icon: "🧺", en: "Basket", ch: "籃子", price: 6, category: "Daily" },
+  { id: 81, icon: "🧽", en: "Sponge", ch: "海綿", price: 1, category: "Daily" },
+  { id: 82, icon: "🧹", en: "Broom", ch: "掃把", price: 7, category: "Daily" },
+  { id: 83, icon: "🪣", en: "Bucket", ch: "水桶", price: 5, category: "Daily" },
+  { id: 84, icon: "💡", en: "Light Bulb", ch: "燈泡", price: 3, category: "Daily" },
+  { id: 85, icon: "🔋", en: "Battery", ch: "電池", price: 6, category: "Daily" },
+  { id: 86, icon: "☂️", en: "Umbrella", ch: "雨傘", price: 8, category: "Daily" },
+  { id: 87, icon: "👕", en: "T-Shirt", ch: "T恤", price: 15, category: "Clothing" },
+  { id: 88, icon: "👖", en: "Jeans", ch: "牛仔褲", price: 25, category: "Clothing" },
+  { id: 89, icon: "👗", en: "Dress", ch: "洋裝", price: 30, category: "Clothing" },
+  { id: 90, icon: "🧦", en: "Socks", ch: "襪子", price: 3, category: "Clothing" },
+  { id: 91, icon: "👟", en: "Shoes", ch: "鞋子", price: 40, category: "Clothing" },
+  { id: 92, icon: "🧢", en: "Cap", ch: "帽子", price: 12, category: "Clothing" },
+  { id: 93, icon: "👓", en: "Glasses", ch: "眼鏡", price: 50, category: "Clothing" },
+  { id: 94, icon: "✏️", en: "Pencil", ch: "鉛筆", price: 1, category: "Stationery" },
+  { id: 95, icon: "🖊️", en: "Pen", ch: "原子筆", price: 2, category: "Stationery" },
+  { id: 96, icon: "📒", en: "Notebook", ch: "筆記本", price: 4, category: "Stationery" },
+  { id: 97, icon: "✂️", en: "Scissors", ch: "剪刀", price: 5, category: "Stationery" },
+  { id: 98, icon: "🧸", en: "Teddy Bear", ch: "泰迪熊", price: 20, category: "Toys" },
+  { id: 99, icon: "🚗", en: "Toy Car", ch: "玩具車", price: 8, category: "Toys" },
+  { id: 100, icon: "🤖", en: "Robot", ch: "機器人", price: 25, category: "Toys" },
+
+  // --- 新增至 500 個 (101-500) ---
+  // 家居與廚房 (Home & Kitchen)
+  { id: 101, icon: "🍳", en: "Frying Pan", ch: "平底鍋", price: 20, category: "Kitchen" },
+  { id: 102, icon: "🥣", en: "Bowl", ch: "碗", price: 5, category: "Kitchen" },
+  { id: 103, icon: "🍽️", en: "Plate", ch: "盤子", price: 6, category: "Kitchen" },
+  { id: 104, icon: "🥄", en: "Spoon", ch: "湯匙", price: 2, category: "Kitchen" },
+  { id: 105, icon: "🍴", en: "Fork", ch: "叉子", price: 2, category: "Kitchen" },
+  { id: 106, icon: "🔪", en: "Knife", ch: "刀子", price: 8, category: "Kitchen" },
+  { id: 107, icon: "🥢", en: "Chopsticks", ch: "筷子", price: 2, category: "Kitchen" },
+  { id: 108, icon: "🥤", en: "Cup", ch: "杯子", price: 4, category: "Kitchen" },
+  { id: 109, icon: "🏺", en: "Vase", ch: "花瓶", price: 15, category: "Home" },
+  { id: 110, icon: "🖼️", en: "Frame", ch: "相框", price: 10, category: "Home" },
+  { id: 111, icon: "🪞", en: "Mirror", ch: "鏡子", price: 25, category: "Home" },
+  { id: 112, icon: "🕯️", en: "Candle", ch: "蠟燭", price: 5, category: "Home" },
+  { id: 113, icon: "🕰️", en: "Clock", ch: "時鐘", price: 18, category: "Home" },
+  { id: 114, icon: "🛌", en: "Bed", ch: "床", price: 200, category: "Home" },
+  { id: 115, icon: "🛋️", en: "Sofa", ch: "沙發", price: 150, category: "Home" },
+  { id: 116, icon: "🪑", en: "Chair", ch: "椅子", price: 40, category: "Home" },
+  { id: 117, icon: "🚪", en: "Door", ch: "門", price: 80, category: "Home" },
+  { id: 118, icon: "🛁", en: "Bathtub", ch: "浴缸", price: 120, category: "Home" },
+  { id: 119, icon: "🚽", en: "Toilet", ch: "馬桶", price: 90, category: "Home" },
+  { id: 120, icon: "🚿", en: "Shower", ch: "淋浴", price: 50, category: "Home" },
+  
+  // 電子產品 (Electronics)
+  { id: 121, icon: "📱", en: "Smartphone", ch: "智慧型手機", price: 500, category: "Electronics" },
+  { id: 122, icon: "💻", en: "Laptop", ch: "筆記型電腦", price: 800, category: "Electronics" },
+  { id: 123, icon: "🖥️", en: "Monitor", ch: "螢幕", price: 200, category: "Electronics" },
+  { id: 124, icon: "⌨️", en: "Keyboard", ch: "鍵盤", price: 50, category: "Electronics" },
+  { id: 125, icon: "🖱️", en: "Mouse", ch: "滑鼠", price: 25, category: "Electronics" },
+  { id: 126, icon: "🎧", en: "Headphones", ch: "耳機", price: 60, category: "Electronics" },
+  { id: 127, icon: "📷", en: "Camera", ch: "相機", price: 300, category: "Electronics" },
+  { id: 128, icon: "📺", en: "Television", ch: "電視", price: 400, category: "Electronics" },
+  { id: 129, icon: "⌚", en: "Watch", ch: "手錶", price: 150, category: "Electronics" },
+  { id: 130, icon: "🖨️", en: "Printer", ch: "印表機", price: 120, category: "Electronics" },
+  { id: 131, icon: "🎮", en: "Controller", ch: "遊戲手把", price: 60, category: "Electronics" },
+  { id: 132, icon: "🕹️", en: "Joystick", ch: "搖桿", price: 40, category: "Electronics" },
+  { id: 133, icon: "🔌", en: "Plug", ch: "插頭", price: 5, category: "Electronics" },
+  { id: 134, icon: "🔋", en: "Battery Pack", ch: "行動電源", price: 20, category: "Electronics" },
+  { id: 135, icon: "💾", en: "Floppy Disk", ch: "磁片", price: 2, category: "Electronics" },
+  
+  // 交通工具與戶外 (Transport & Outdoor)
+  { id: 136, icon: "🚲", en: "Bicycle", ch: "腳踏車", price: 100, category: "Transport" },
+  { id: 137, icon: "🛹", en: "Skateboard", ch: "滑板", price: 40, category: "Transport" },
+  { id: 138, icon: "🛴", en: "Scooter", ch: "滑板車", price: 50, category: "Transport" },
+  { id: 139, icon: "⛺", en: "Tent", ch: "帳篷", price: 80, category: "Outdoor" },
+  { id: 140, icon: "🎒", en: "Backpack", ch: "背包", price: 30, category: "Outdoor" },
+  { id: 141, icon: "🧭", en: "Compass", ch: "指南針", price: 15, category: "Outdoor" },
+  { id: 142, icon: "🗺️", en: "Map", ch: "地圖", price: 5, category: "Outdoor" },
+  { id: 143, icon: "🔦", en: "Flashlight", ch: "手電筒", price: 10, category: "Outdoor" },
+  { id: 144, icon: "🔥", en: "Fire Extinguisher", ch: "滅火器", price: 35, category: "Safety" },
+  { id: 145, icon: "🧳", en: "Suitcase", ch: "行李箱", price: 60, category: "Travel" },
+  
+  // 音樂與藝術 (Music & Art)
+  { id: 146, icon: "🎸", en: "Guitar", ch: "吉他", price: 120, category: "Music" },
+  { id: 147, icon: "🎹", en: "Piano", ch: "鋼琴", price: 500, category: "Music" },
+  { id: 148, icon: "🎻", en: "Violin", ch: "小提琴", price: 200, category: "Music" },
+  { id: 149, icon: "🥁", en: "Drum", ch: "鼓", price: 80, category: "Music" },
+  { id: 150, icon: "🎺", en: "Trumpet", ch: "小號", price: 100, category: "Music" },
+  { id: 151, icon: "🎷", en: "Saxophone", ch: "薩克斯風", price: 150, category: "Music" },
+  { id: 152, icon: "🎨", en: "Palette", ch: "調色盤", price: 8, category: "Art" },
+  { id: 153, icon: "🖌️", en: "Brush", ch: "畫筆", price: 5, category: "Art" },
+  { id: 154, icon: "🖍️", en: "Crayon", ch: "蠟筆", price: 3, category: "Art" },
+  { id: 155, icon: "🎭", en: "Mask", ch: "面具", price: 12, category: "Art" },
+
+  // 更多食物 - 蔬菜 (More Veg)
+  { id: 156, icon: "🥬", en: "Cabbage", ch: "高麗菜", price: 3, category: "Veg" },
+  { id: 157, icon: "🥦", en: "Cauliflower", ch: "花菜", price: 3, category: "Veg" },
+  { id: 158, icon: "🫑", en: "Bell Pepper", ch: "甜椒", price: 2, category: "Veg" },
+  { id: 159, icon: "🥑", en: "Avocado", ch: "酪梨", price: 4, category: "Veg" },
+  { id: 160, icon: "🥔", en: "Potato", ch: "馬鈴薯", price: 2, category: "Veg" },
+  { id: 161, icon: "🥕", en: "Radish", ch: "白蘿蔔", price: 2, category: "Veg" },
+  { id: 162, icon: "🫒", en: "Olive", ch: "橄欖", price: 5, category: "Veg" },
+  { id: 163, icon: "🌿", en: "Herb", ch: "香草", price: 3, category: "Veg" },
+  { id: 164, icon: "🎋", en: "Bamboo Shoot", ch: "竹筍", price: 4, category: "Veg" },
+  { id: 165, icon: "🥜", en: "Peanut", ch: "花生", price: 3, category: "Veg" },
+
+  // 更多食物 - 水果 (More Fruit)
+  { id: 166, icon: "🫐", en: "Blueberry", ch: "藍莓", price: 6, category: "Fruit" },
+  { id: 167, icon: "🍋", en: "Lime", ch: "萊姆", price: 3, category: "Fruit" },
+  { id: 168, icon: "🍊", en: "Orange", ch: "柳橙", price: 3, category: "Fruit" },
+  { id: 169, icon: "🍊", en: "Tangerine", ch: "橘子", price: 3, category: "Fruit" },
+  { id: 170, icon: "🍈", en: "Cantaloupe", ch: "哈密瓜", price: 5, category: "Fruit" },
+  { id: 171, icon: "🍐", en: "Pear", ch: "梨子", price: 3, category: "Fruit" },
+  { id: 172, icon: "🍑", en: "Nectarine", ch: "油桃", price: 4, category: "Fruit" },
+  { id: 173, icon: "🍇", en: "Raisin", ch: "葡萄乾", price: 4, category: "Fruit" },
+  { id: 174, icon: "🌰", en: "Chestnut", ch: "栗子", price: 5, category: "Fruit" },
+  { id: 175, icon: "🥭", en: "Durian", ch: "榴槤", price: 20, category: "Fruit" },
+
+  // 更多食物 - 熟食與調料 (Cooked & Spices)
+  { id: 176, icon: "🍜", en: "Noodles", ch: "麵條", price: 8, category: "Food" },
+  { id: 177, icon: "🍝", en: "Spaghetti", ch: "義大利麵", price: 10, category: "Food" },
+  { id: 178, icon: "🍲", en: "Stew", ch: "燉菜", price: 12, category: "Food" },
+  { id: 179, icon: "🍛", en: "Curry", ch: "咖哩", price: 9, category: "Food" },
+  { id: 180, icon: "🍣", en: "Sushi", ch: "壽司", price: 15, category: "Food" },
+  { id: 181, icon: "🍱", en: "Bento", ch: "便當", price: 10, category: "Food" },
+  { id: 182, icon: "🥟", en: "Dumpling", ch: "水餃", price: 6, category: "Food" },
+  { id: 183, icon: "🍤", en: "Tempura", ch: "天婦羅", price: 8, category: "Food" },
+  { id: 184, icon: "🍚", en: "Rice", ch: "米飯", price: 2, category: "Food" },
+  { id: 185, icon: "🍙", en: "Onigiri", ch: "飯糰", price: 3, category: "Food" },
+  { id: 186, icon: "🍘", en: "Cracker", ch: "仙貝", price: 2, category: "Snack" },
+  { id: 187, icon: "🧂", en: "Salt", ch: "鹽", price: 1, category: "Spice" },
+  { id: 188, icon: "🧂", en: "Pepper", ch: "胡椒", price: 2, category: "Spice" },
+  { id: 189, icon: "🌶️", en: "Chili Sauce", ch: "辣椒醬", price: 3, category: "Spice" },
+  { id: 190, icon: "🍯", en: "Jam", ch: "果醬", price: 4, category: "Spice" },
+
+  // 運動用品 (Sports)
+  { id: 191, icon: "⚽", en: "Soccer Ball", ch: "足球", price: 15, category: "Sports" },
+  { id: 192, icon: "🏀", en: "Basketball", ch: "籃球", price: 18, category: "Sports" },
+  { id: 193, icon: "🏈", en: "Football", ch: "橄欖球", price: 20, category: "Sports" },
+  { id: 194, icon: "⚾", en: "Baseball", ch: "棒球", price: 5, category: "Sports" },
+  { id: 195, icon: "🥎", en: "Softball", ch: "壘球", price: 5, category: "Sports" },
+  { id: 196, icon: "🎾", en: "Tennis Ball", ch: "網球", price: 3, category: "Sports" },
+  { id: 197, icon: "🏐", en: "Volleyball", ch: "排球", price: 12, category: "Sports" },
+  { id: 198, icon: "🏉", en: "Rugby Ball", ch: "橄欖球", price: 18, category: "Sports" },
+  { id: 199, icon: "🎱", en: "8-Ball", ch: "撞球", price: 4, category: "Sports" },
+  { id: 200, icon: "🏓", en: "Ping Pong", ch: "乒乓球", price: 1, category: "Sports" },
+  { id: 201, icon: "🏸", en: "Badminton", ch: "羽毛球", price: 2, category: "Sports" },
+  { id: 202, icon: "🥅", en: "Goal Net", ch: "球門", price: 50, category: "Sports" },
+  { id: 203, icon: "🥊", en: "Boxing Glove", ch: "拳擊手套", price: 30, category: "Sports" },
+  { id: 204, icon: "🥋", en: "Uniform", ch: "道服", price: 40, category: "Sports" },
+  { id: 205, icon: "🥇", en: "Gold Medal", ch: "金牌", price: 100, category: "Sports" },
+
+  // 工具與五金 (Tools)
+  { id: 206, icon: "🔨", en: "Hammer", ch: "鐵鎚", price: 10, category: "Tools" },
+  { id: 207, icon: "🪓", en: "Axe", ch: "斧頭", price: 15, category: "Tools" },
+  { id: 208, icon: "⛏️", en: "Pickaxe", ch: "十字鎬", price: 18, category: "Tools" },
+  { id: 209, icon: "🔧", en: "Wrench", ch: "扳手", price: 8, category: "Tools" },
+  { id: 210, icon: "🪛", en: "Screwdriver", ch: "螺絲起子", price: 6, category: "Tools" },
+  { id: 211, icon: "🔩", en: "Nut & Bolt", ch: "螺絲螺母", price: 1, category: "Tools" },
+  { id: 212, icon: "⚙️", en: "Gear", ch: "齒輪", price: 5, category: "Tools" },
+  { id: 213, icon: "🗜️", en: "Clamp", ch: "夾具", price: 12, category: "Tools" },
+  { id: 214, icon: "⚖️", en: "Scale", ch: "天平", price: 20, category: "Tools" },
+  { id: 215, icon: "🔗", en: "Chain", ch: "鐵鍊", price: 10, category: "Tools" },
+  { id: 216, icon: "🧲", en: "Magnet", ch: "磁鐵", price: 4, category: "Tools" },
+  { id: 217, icon: "🪜", en: "Ladder", ch: "梯子", price: 30, category: "Tools" },
+  { id: 218, icon: "🧰", en: "Toolbox", ch: "工具箱", price: 25, category: "Tools" },
+  { id: 219, icon: "🩹", en: "Bandage", ch: "繃帶", price: 2, category: "Health" },
+  { id: 220, icon: "🩺", en: "Stethoscope", ch: "聽診器", price: 40, category: "Health" },
+
+  // 科學與其他 (Science & Misc)
+  { id: 221, icon: "🔭", en: "Telescope", ch: "望遠鏡", price: 60, category: "Science" },
+  { id: 222, icon: "🔬", en: "Microscope", ch: "顯微鏡", price: 80, category: "Science" },
+  { id: 223, icon: "📡", en: "Satellite", ch: "衛星天線", price: 100, category: "Science" },
+  { id: 224, icon: "🧬", en: "DNA", ch: "DNA模型", price: 20, category: "Science" },
+  { id: 225, icon: "🧯", en: "Extinguisher", ch: "滅火器", price: 30, category: "Safety" },
+  { id: 226, icon: "🛒", en: "Cart", ch: "購物車", price: 50, category: "Misc" },
+  { id: 227, icon: "🏧", en: "ATM", ch: "提款機", price: 1000, category: "Misc" },
+  { id: 228, icon: "🗑️", en: "Trash Can", ch: "垃圾桶", price: 10, category: "Misc" },
+  { id: 229, icon: "🪧", en: "Sign", ch: "告示牌", price: 5, category: "Misc" },
+  { id: 230, icon: "🔑", en: "Key", ch: "鑰匙", price: 2, category: "Misc" },
+  { id: 231, icon: "🔐", en: "Lock", ch: "鎖", price: 8, category: "Misc" },
+  { id: 232, icon: "📦", en: "Box", ch: "箱子", price: 3, category: "Misc" },
+  { id: 233, icon: "✉️", en: "Envelope", ch: "信封", price: 1, category: "Misc" },
+  { id: 234, icon: "📮", en: "Postbox", ch: "郵筒", price: 40, category: "Misc" },
+  { id: 235, icon: "✏️", en: "Pencil Case", ch: "鉛筆盒", price: 5, category: "Stationery" },
+
+  // 更多動物與寵物用品 (Pets & Animals)
+  { id: 236, icon: "🐕", en: "Dog", ch: "狗", price: 50, category: "Pet" },
+  { id: 237, icon: "🐈", en: "Cat", ch: "貓", price: 50, category: "Pet" },
+  { id: 238, icon: "🐹", en: "Hamster", ch: "倉鼠", price: 15, category: "Pet" },
+  { id: 239, icon: "🐰", en: "Rabbit", ch: "兔子", price: 20, category: "Pet" },
+  { id: 240, icon: "🦜", en: "Parrot", ch: "鸚鵡", price: 30, category: "Pet" },
+  { id: 241, icon: "🦴", en: "Bone", ch: "骨頭", price: 5, category: "Pet" },
+  { id: 242, icon: "🐾", en: "Paw Print", ch: "腳印貼紙", price: 1, category: "Pet" },
+  { id: 243, icon: "🐢", en: "Turtle", ch: "烏龜", price: 25, category: "Pet" },
+  { id: 244, icon: "🦎", en: "Lizard", ch: "蜥蜴", price: 30, category: "Pet" },
+  { id: 245, icon: "🐍", en: "Snake", ch: "蛇", price: 40, category: "Pet" },
+
+  // 自然與植物 (Nature)
+  { id: 246, icon: "🌵", en: "Cactus", ch: "仙人掌", price: 8, category: "Plant" },
+  { id: 247, icon: "🌲", en: "Pine Tree", ch: "松樹", price: 20, category: "Plant" },
+  { id: 248, icon: "🌳", en: "Tree", ch: "樹", price: 15, category: "Plant" },
+  { id: 249, icon: "🌴", en: "Palm Tree", ch: "棕櫚樹", price: 25, category: "Plant" },
+  { id: 250, icon: "🌹", en: "Rose", ch: "玫瑰", price: 5, category: "Plant" },
+  { id: 251, icon: "🌻", en: "Sunflower", ch: "向日葵", price: 4, category: "Plant" },
+  { id: 252, icon: "🌷", en: "Tulip", ch: "鬱金香", price: 4, category: "Plant" },
+  { id: 253, icon: "🌼", en: "Daisy", ch: "雛菊", price: 3, category: "Plant" },
+  { id: 254, icon: "🍄", en: "Fungus", ch: "真菌", price: 2, category: "Plant" },
+  { id: 255, icon: "🍂", en: "Leaf", ch: "葉子", price: 1, category: "Plant" },
+
+  // 天氣與天空 (Weather)
+  { id: 256, icon: "☀️", en: "Sun", ch: "太陽", price: 0, category: "Weather" },
+  { id: 257, icon: "🌙", en: "Moon", ch: "月亮", price: 0, category: "Weather" },
+  { id: 258, icon: "⭐", en: "Star", ch: "星星", price: 0, category: "Weather" },
+  { id: 259, icon: "☁️", en: "Cloud", ch: "雲", price: 0, category: "Weather" },
+  { id: 260, icon: "🌧️", en: "Rain", ch: "雨", price: 0, category: "Weather" },
+  { id: 261, icon: "❄️", en: "Snowflake", ch: "雪花", price: 0, category: "Weather" },
+  { id: 262, icon: "⚡", en: "Lightning", ch: "閃電", price: 0, category: "Weather" },
+  { id: 263, icon: "🌈", en: "Rainbow", ch: "彩虹", price: 0, category: "Weather" },
+  { id: 264, icon: "☂️", en: "Umbrella", ch: "雨傘", price: 8, category: "Weather" },
+  { id: 265, icon: "⛄", en: "Snowman", ch: "雪人", price: 0, category: "Weather" },
+
+  // 更多服飾 (Clothing)
+  { id: 266, icon: "🧥", en: "Coat", ch: "大衣", price: 50, category: "Clothing" },
+  { id: 267, icon: "👚", en: "Blouse", ch: "女襯衫", price: 20, category: "Clothing" },
+  { id: 268, icon: "👔", en: "Tie", ch: "領帶", price: 10, category: "Clothing" },
+  { id: 269, icon: "🧣", en: "Scarf", ch: "圍巾", price: 12, category: "Clothing" },
+  { id: 270, icon: "🧤", en: "Gloves", ch: "手套", price: 8, category: "Clothing" },
+  { id: 271, icon: "👙", en: "Bikini", ch: "比基尼", price: 25, category: "Clothing" },
+  { id: 272, icon: "🩳", en: "Shorts", ch: "短褲", price: 15, category: "Clothing" },
+  { id: 273, icon: "👠", en: "High Heels", ch: "高跟鞋", price: 45, category: "Clothing" },
+  { id: 274, icon: "🥾", en: "Boots", ch: "靴子", price: 55, category: "Clothing" },
+  { id: 275, icon: "👑", en: "Crown", ch: "皇冠", price: 100, category: "Clothing" },
+
+  // 更多工具與物件
+  { id: 276, icon: "🧶", en: "Yarn", ch: "毛線", price: 4, category: "Craft" },
+  { id: 277, icon: "🧵", en: "Thread", ch: "線", price: 2, category: "Craft" },
+  { id: 278, icon: "🧷", en: "Safety Pin", ch: "安全別針", price: 1, category: "Craft" },
+  { id: 279, icon: "🪡", en: "Needle", ch: "針", price: 1, category: "Craft" },
+  { id: 280, icon: "💍", en: "Ring", ch: "戒指", price: 200, category: "Jewelry" },
+  { id: 281, icon: "💎", en: "Diamond", ch: "鑽石", price: 500, category: "Jewelry" },
+  { id: 282, icon: "📿", en: "Necklace", ch: "項鍊", price: 150, category: "Jewelry" },
+  { id: 283, icon: "💄", en: "Lipstick", ch: "口紅", price: 25, category: "Beauty" },
+  { id: 284, icon: "💅", en: "Nail Polish", ch: "指甲油", price: 10, category: "Beauty" },
+  { id: 285, icon: "💇", en: "Haircut", ch: "剪髮", price: 30, category: "Service" },
+
+  // 更多日常雜貨
+  { id: 286, icon: "📰", en: "Newspaper", ch: "報紙", price: 2, category: "Media" },
+  { id: 287, icon: "📘", en: "Book", ch: "書", price: 15, category: "Media" },
+  { id: 288, icon: "📀", en: "DVD", ch: "光碟", price: 10, category: "Media" },
+  { id: 289, icon: "📅", en: "Calendar", ch: "月曆", price: 8, category: "Daily" },
+  { id: 290, icon: "📎", en: "Paperclip", ch: "迴紋針", price: 1, category: "Stationery" },
+  { id: 291, icon: "📏", en: "Ruler", ch: "尺", price: 3, category: "Stationery" },
+  { id: 292, icon: "📐", en: "Triangle Ruler", ch: "三角板", price: 3, category: "Stationery" },
+  { id: 293, icon: "📁", en: "Folder", ch: "資料夾", price: 2, category: "Stationery" },
+  { id: 294, icon: "📌", en: "Pushpin", ch: "圖釘", price: 1, category: "Stationery" },
+  { id: 295, icon: "🖍️", en: "Marker", ch: "麥克筆", price: 3, category: "Stationery" },
+
+  // 填充更多食物
+  { id: 296, icon: "🥫", en: "Canned Food", ch: "罐頭", price: 4, category: "Food" },
+  { id: 297, icon: "🥣", en: "Cereal", ch: "麥片", price: 6, category: "Breakfast" },
+  { id: 298, icon: "🧈", en: "Butter", ch: "奶油", price: 5, category: "Dairy" },
+  { id: 299, icon: "🍦", en: "Soft Serve", ch: "霜淇淋", price: 4, category: "Dairy" },
+  { id: 300, icon: "🍧", en: "Shaved Ice", ch: "剉冰", price: 5, category: "Dessert" },
+  { id: 301, icon: "🍨", en: "Sundae", ch: "聖代", price: 7, category: "Dessert" },
+  { id: 302, icon: "🥮", en: "Mooncake", ch: "月餅", price: 8, category: "Dessert" },
+  { id: 303, icon: "🍡", en: "Dango", ch: "糰子", price: 3, category: "Dessert" },
+  { id: 304, icon: "🍢", en: "Oden", ch: "關東煮", price: 5, category: "Food" },
+  { id: 305, icon: "🍜", en: "Ramen", ch: "拉麵", price: 10, category: "Food" },
+  { id: 306, icon: "🥩", en: "Beef", ch: "牛肉", price: 15, category: "Meat" },
+  { id: 307, icon: "🥓", en: "Pork", ch: "豬肉", price: 12, category: "Meat" },
+  { id: 308, icon: "🍖", en: "Ribs", ch: "肋排", price: 18, category: "Meat" },
+  { id: 309, icon: "🍗", en: "Wing", ch: "雞翅", price: 6, category: "Meat" },
+  { id: 310, icon: "🥪", en: "Toast", ch: "吐司", price: 3, category: "Bakery" },
+
+  // 飲料與液體
+  { id: 311, icon: "🍼", en: "Baby Bottle", ch: "奶瓶", price: 8, category: "Baby" },
+  { id: 312, icon: "🧊", en: "Ice Cube", ch: "冰塊", price: 1, category: "Misc" },
+  { id: 313, icon: "🥤", en: "Cola", ch: "可樂", price: 2, category: "Drink" },
+  { id: 314, icon: "🧃", en: "Apple Juice", ch: "蘋果汁", price: 3, category: "Drink" },
+  { id: 315, icon: "🥛", en: "Soy Milk", ch: "豆漿", price: 3, category: "Drink" },
+  { id: 316, icon: "🍶", en: "Sake", ch: "清酒", price: 10, category: "Drink" },
+  { id: 317, icon: "🍾", en: "Champagne", ch: "香檳", price: 25, category: "Drink" },
+  { id: 318, icon: "🥃", en: "Whiskey", ch: "威士忌", price: 30, category: "Drink" },
+  { id: 319, icon: "🧉", en: "Mate", ch: "瑪黛茶", price: 5, category: "Drink" },
+  { id: 320, icon: "🫖", en: "Teapot", ch: "茶壺", price: 15, category: "Kitchen" },
+
+  // 更多物品
+  { id: 321, icon: "🎁", en: "Gift", ch: "禮物", price: 20, category: "Misc" },
+  { id: 322, icon: "🎈", en: "Balloon", ch: "氣球", price: 1, category: "Party" },
+  { id: 323, icon: "🎉", en: "Party Popper", ch: "拉炮", price: 2, category: "Party" },
+  { id: 324, icon: "🧨", en: "Firecracker", ch: "鞭炮", price: 5, category: "Party" },
+  { id: 325, icon: "🎎", en: "Dolls", ch: "玩偶", price: 15, category: "Toy" },
+  { id: 326, icon: "🎏", en: "Carp Streamer", ch: "鯉魚旗", price: 10, category: "Decor" },
+  { id: 327, icon: "🎐", en: "Wind Chime", ch: "風鈴", price: 8, category: "Decor" },
+  { id: 328, icon: "🧧", en: "Red Envelope", ch: "紅包", price: 5, category: "Misc" },
+  { id: 329, icon: "🎀", en: "Ribbon", ch: "緞帶", price: 1, category: "Misc" },
+  { id: 330, icon: "🪄", en: "Magic Wand", ch: "魔杖", price: 12, category: "Toy" },
+
+  // 符號與標誌
+  { id: 331, icon: "🏧", en: "Cash", ch: "現金", price: 100, category: "Finance" },
+  { id: 332, icon: "💳", en: "Credit Card", ch: "信用卡", price: 0, category: "Finance" },
+  { id: 333, icon: "🧾", en: "Receipt", ch: "收據", price: 0, category: "Finance" },
+  { id: 334, icon: "💹", en: "Chart", ch: "圖表", price: 0, category: "Finance" },
+  { id: 335, icon: "💱", en: "Currency", ch: "貨幣", price: 0, category: "Finance" },
+  { id: 336, icon: "💲", en: "Dollar", ch: "美元符號", price: 0, category: "Finance" },
+  { id: 337, icon: "📍", en: "Pin", ch: "地標", price: 0, category: "Map" },
+  { id: 338, icon: "🚩", en: "Flag", ch: "旗幟", price: 5, category: "Map" },
+  { id: 339, icon: "🛑", en: "Stop Sign", ch: "停止標誌", price: 10, category: "Sign" },
+  { id: 340, icon: "🚧", en: "Construction", ch: "施工", price: 0, category: "Sign" },
+
+  // 更多隨機物品
+  { id: 341, icon: "🗿", en: "Statue", ch: "石像", price: 50, category: "Art" },
+  { id: 342, icon: "🎫", en: "Ticket", ch: "票", price: 10, category: "Misc" },
+  { id: 343, icon: "🎬", en: "Clapper Board", ch: "場記板", price: 15, category: "Media" },
+  { id: 344, icon: "🎤", en: "Microphone", ch: "麥克風", price: 30, category: "Media" },
+  { id: 345, icon: "🎥", en: "Movie Camera", ch: "攝影機", price: 200, category: "Media" },
+  { id: 346, icon: "🔫", en: "Water Gun", ch: "水槍", price: 5, category: "Toy" },
+  { id: 347, icon: "💣", en: "Bomb", ch: "炸彈", price: 50, category: "Weapon" },
+  { id: 348, icon: "🛡️", en: "Shield", ch: "盾牌", price: 40, category: "Weapon" },
+  { id: 349, icon: "🗡️", en: "Dagger", ch: "短劍", price: 25, category: "Weapon" },
+  { id: 350, icon: "🏹", en: "Bow", ch: "弓", price: 35, category: "Weapon" },
+
+  // 更多自然
+  { id: 351, icon: "🌍", en: "Earth", ch: "地球", price: 0, category: "Space" },
+  { id: 352, icon: "🌑", en: "New Moon", ch: "新月", price: 0, category: "Space" },
+  { id: 353, icon: "🌋", en: "Volcano", ch: "火山", price: 0, category: "Nature" },
+  { id: 354, icon: "🏔️", en: "Mountain", ch: "山", price: 0, category: "Nature" },
+  { id: 355, icon: "🏖️", en: "Beach", ch: "海灘", price: 0, category: "Nature" },
+  { id: 356, icon: "🏜️", en: "Desert", ch: "沙漠", price: 0, category: "Nature" },
+  { id: 357, icon: "🏝️", en: "Island", ch: "島嶼", price: 0, category: "Nature" },
+  { id: 358, icon: "🏞️", en: "Park", ch: "公園", price: 0, category: "Nature" },
+  { id: 359, icon: "🏟️", en: "Stadium", ch: "體育場", price: 0, category: "Place" },
+  { id: 360, icon: "🏠", en: "House", ch: "房子", price: 0, category: "Place" },
+
+  // 更多食物 361-400
+  { id: 361, icon: "🌰", en: "Hazelnut", ch: "榛果", price: 6, category: "Nut" },
+  { id: 362, icon: "🥜", en: "Walnut", ch: "核桃", price: 7, category: "Nut" },
+  { id: 363, icon: "🥔", en: "Chips", ch: "洋芋片", price: 3, category: "Snack" },
+  { id: 364, icon: "🥨", en: "Pretzel", ch: "蝴蝶餅", price: 3, category: "Snack" },
+  { id: 365, icon: "🥯", en: "Bread Roll", ch: "餐包", price: 2, category: "Bakery" },
+  { id: 366, icon: "🥖", en: "Baguette", ch: "法棍", price: 4, category: "Bakery" },
+  { id: 367, icon: "🧀", en: "Cheddar", ch: "切達起司", price: 5, category: "Dairy" },
+  { id: 368, icon: "🥡", en: "Takeout Box", ch: "外帶盒", price: 1, category: "Misc" },
+  { id: 369, icon: "🥢", en: "Bowl of Rice", ch: "白飯", price: 2, category: "Food" },
+  { id: 370, icon: "🍶", en: "Oil", ch: "油", price: 6, category: "Kitchen" },
+  { id: 371, icon: "🥘", en: "Paella", ch: "燉飯", price: 12, category: "Food" },
+  { id: 372, icon: "🥗", en: "Salad", ch: "沙拉", price: 6, category: "Food" },
+  { id: 373, icon: "🥣", en: "Soup", ch: "湯", price: 5, category: "Food" },
+  { id: 374, icon: "🍪", en: "Biscuit", ch: "餅乾", price: 2, category: "Snack" },
+  { id: 375, icon: "🥛", en: "Glass of Milk", ch: "牛奶杯", price: 2, category: "Drink" },
+  { id: 376, icon: "🍷", en: "Red Wine", ch: "紅酒", price: 15, category: "Drink" },
+  { id: 377, icon: "🍸", en: "Martini", ch: "馬丁尼", price: 12, category: "Drink" },
+  { id: 378, icon: "🍹", en: "Tropical Drink", ch: "熱帶飲料", price: 8, category: "Drink" },
+  { id: 379, icon: "🍺", en: "Mug of Beer", ch: "啤酒杯", price: 5, category: "Drink" },
+  { id: 380, icon: "🍼", en: "Milk Bottle", ch: "牛奶瓶", price: 3, category: "Drink" },
+  { id: 381, icon: "🧂", en: "Salt Shaker", ch: "鹽罐", price: 4, category: "Kitchen" },
+  { id: 382, icon: "🥫", en: "Tomato Sauce", ch: "番茄醬", price: 3, category: "Food" },
+  { id: 383, icon: "🥟", en: "Potsticker", ch: "鍋貼", price: 6, category: "Food" },
+  { id: 384, icon: "🥠", en: "Fortune Cookie", ch: "幸運餅乾", price: 1, category: "Snack" },
+  { id: 385, icon: "🥡", en: "Oyster Pail", ch: "外賣盒", price: 1, category: "Misc" },
+  { id: 386, icon: "🍦", en: "Cone", ch: "甜筒", price: 3, category: "Dessert" },
+  { id: 387, icon: "🥧", en: "Tart", ch: "塔", price: 5, category: "Dessert" },
+  { id: 388, icon: "🧁", en: "Cupcake", ch: "杯子蛋糕", price: 4, category: "Dessert" },
+  { id: 389, icon: "🍰", en: "Shortcake", ch: "草莓蛋糕", price: 6, category: "Dessert" },
+  { id: 390, icon: "🎂", en: "Birthday Cake", ch: "生日蛋糕", price: 20, category: "Dessert" },
+  { id: 391, icon: "🍮", en: "Custard", ch: "卡士達", price: 3, category: "Dessert" },
+  { id: 392, icon: "🍭", en: "Swirl Lollipop", ch: "旋轉棒棒糖", price: 2, category: "Snack" },
+  { id: 393, icon: "🍬", en: "Wrapped Candy", ch: "糖果", price: 1, category: "Snack" },
+  { id: 394, icon: "🍫", en: "Chocolate Bar", ch: "巧克力棒", price: 2, category: "Snack" },
+  { id: 395, icon: "🍿", en: "Popcorn Box", ch: "爆米花盒", price: 4, category: "Snack" },
+  { id: 396, icon: "🍩", en: "Glazed Donut", ch: "糖霜甜甜圈", price: 3, category: "Bakery" },
+  { id: 397, icon: "🍪", en: "Choco Chip", ch: "巧克力餅乾", price: 2, category: "Snack" },
+  { id: 398, icon: "🥜", en: "Nuts", ch: "堅果", price: 5, category: "Snack" },
+  { id: 399, icon: "🥣", en: "Porridge", ch: "粥", price: 4, category: "Food" },
+  { id: 400, icon: "🥩", en: "Raw Meat", ch: "生肉", price: 10, category: "Meat" },
+
+  // 更多物品 401-450
+  { id: 401, icon: "🚂", en: "Locomotive", ch: "火車頭", price: 50, category: "Toy" },
+  { id: 402, icon: "🚃", en: "Train Car", ch: "車廂", price: 40, category: "Toy" },
+  { id: 403, icon: "🚄", en: "Bullet Train", ch: "新幹線", price: 60, category: "Toy" },
+  { id: 404, icon: "🚅", en: "High Speed Train", ch: "高鐵", price: 60, category: "Toy" },
+  { id: 405, icon: "🚆", en: "Train", ch: "火車", price: 50, category: "Toy" },
+  { id: 406, icon: "🚇", en: "Metro", ch: "捷運", price: 50, category: "Toy" },
+  { id: 407, icon: "🚈", en: "Light Rail", ch: "輕軌", price: 50, category: "Toy" },
+  { id: 408, icon: "🚉", en: "Station", ch: "車站", price: 100, category: "Toy" },
+  { id: 409, icon: "🚋", en: "Tram", ch: "路面電車", price: 40, category: "Toy" },
+  { id: 410, icon: "🚌", en: "Bus", ch: "公車", price: 30, category: "Toy" },
+  { id: 411, icon: "🚍", en: "Oncoming Bus", ch: "迎面公車", price: 30, category: "Toy" },
+  { id: 412, icon: "🚎", en: "Trolleybus", ch: "無軌電車", price: 30, category: "Toy" },
+  { id: 413, icon: "🚐", en: "Minibus", ch: "小巴", price: 25, category: "Toy" },
+  { id: 414, icon: "🚑", en: "Ambulance", ch: "救護車", price: 35, category: "Toy" },
+  { id: 415, icon: "🚒", en: "Fire Engine", ch: "消防車", price: 40, category: "Toy" },
+  { id: 416, icon: "🚓", en: "Police Car", ch: "警車", price: 35, category: "Toy" },
+  { id: 417, icon: "🚕", en: "Taxi", ch: "計程車", price: 25, category: "Toy" },
+  { id: 418, icon: "🚗", en: "Car", ch: "汽車", price: 50, category: "Toy" },
+  { id: 419, icon: "🚙", en: "SUV", ch: "休旅車", price: 60, category: "Toy" },
+  { id: 420, icon: "🚚", en: "Truck", ch: "卡車", price: 45, category: "Toy" },
+  { id: 421, icon: "🚜", en: "Tractor", ch: "拖拉機", price: 55, category: "Toy" },
+  { id: 422, icon: "🏎️", en: "Racing Car", ch: "賽車", price: 80, category: "Toy" },
+  { id: 423, icon: "🏍️", en: "Motorcycle", ch: "摩托車", price: 40, category: "Toy" },
+  { id: 424, icon: "🛵", en: "Scooter", ch: "機車", price: 35, category: "Toy" },
+  { id: 425, icon: "🚲", en: "Bike", ch: "單車", price: 20, category: "Toy" },
+  { id: 426, icon: "🛴", en: "Kick Scooter", ch: "滑板車", price: 15, category: "Toy" },
+  { id: 427, icon: "🚏", en: "Bus Stop", ch: "公車站", price: 10, category: "Toy" },
+  { id: 428, icon: "🛣️", en: "Motorway", ch: "高速公路", price: 5, category: "Toy" },
+  { id: 429, icon: "🛤️", en: "Railway", ch: "鐵路", price: 5, category: "Toy" },
+  { id: 430, icon: "🛢️", en: "Oil Drum", ch: "油桶", price: 20, category: "Misc" },
+  { id: 431, icon: "⛽", en: "Fuel Pump", ch: "加油機", price: 100, category: "Misc" },
+  { id: 432, icon: "🚨", en: "Siren", ch: "警報器", price: 15, category: "Misc" },
+  { id: 433, icon: "🚥", en: "Traffic Light", ch: "紅綠燈", price: 50, category: "Misc" },
+  { id: 434, icon: "🛑", en: "Stop", ch: "停車", price: 10, category: "Misc" },
+  { id: 435, icon: "🚧", en: "Barrier", ch: "路障", price: 20, category: "Misc" },
+  { id: 436, icon: "⚓", en: "Anchor", ch: "錨", price: 60, category: "Misc" },
+  { id: 437, icon: "⛵", en: "Sailboat", ch: "帆船", price: 200, category: "Toy" },
+  { id: 438, icon: "🛶", en: "Canoe", ch: "獨木舟", price: 150, category: "Toy" },
+  { id: 439, icon: "🚤", en: "Speedboat", ch: "快艇", price: 300, category: "Toy" },
+  { id: 440, icon: "🚢", en: "Ship", ch: "輪船", price: 500, category: "Toy" },
+  { id: 441, icon: "✈️", en: "Airplane", ch: "飛機", price: 400, category: "Toy" },
+  { id: 442, icon: "🛩️", en: "Small Plane", ch: "小飛機", price: 300, category: "Toy" },
+  { id: 443, icon: "🛫", en: "Departure", ch: "起飛", price: 0, category: "Misc" },
+  { id: 444, icon: "🛬", en: "Arrival", ch: "降落", price: 0, category: "Misc" },
+  { id: 445, icon: "🪂", en: "Parachute", ch: "降落傘", price: 80, category: "Outdoor" },
+  { id: 446, icon: "💺", en: "Seat", ch: "座位", price: 50, category: "Misc" },
+  { id: 447, icon: "🚁", en: "Helicopter", ch: "直升機", price: 450, category: "Toy" },
+  { id: 448, icon: "🚟", en: "Suspension Railway", ch: "懸掛鐵路", price: 100, category: "Toy" },
+  { id: 449, icon: "🚠", en: "Cable Car", ch: "纜車", price: 80, category: "Toy" },
+  { id: 450, icon: "🚡", en: "Aerial Tramway", ch: "空中纜車", price: 90, category: "Toy" },
+
+  // 更多隨機雜貨 451-500
+  { id: 451, icon: "🚀", en: "Rocket", ch: "火箭", price: 1000, category: "Toy" },
+  { id: 452, icon: "🛸", en: "UFO", ch: "飛碟", price: 2000, category: "Toy" },
+  { id: 453, icon: "🛎️", en: "Bell", ch: "服務鈴", price: 15, category: "Misc" },
+  { id: 454, icon: "🧳", en: "Luggage", ch: "行李", price: 60, category: "Travel" },
+  { id: 455, icon: "🌂", en: "Closed Umbrella", ch: "收起的傘", price: 8, category: "Daily" },
+  { id: 456, icon: "☂️", en: "Open Umbrella", ch: "開著的傘", price: 8, category: "Daily" },
+  { id: 457, icon: "⛱️", en: "Parasol", ch: "遮陽傘", price: 20, category: "Outdoor" },
+  { id: 458, icon: "⚡", en: "Bolt", ch: "雷電", price: 0, category: "Weather" },
+  { id: 459, icon: "❄️", en: "Snow", ch: "雪", price: 0, category: "Weather" },
+  { id: 460, icon: "☃️", en: "Snowman", ch: "堆雪人", price: 0, category: "Weather" },
+  { id: 461, icon: "🔥", en: "Fire", ch: "火", price: 0, category: "Misc" },
+  { id: 462, icon: "💧", en: "Droplet", ch: "水滴", price: 0, category: "Misc" },
+  { id: 463, icon: "🌊", en: "Wave", ch: "海浪", price: 0, category: "Misc" },
+  { id: 464, icon: "🎃", en: "Jack-O-Lantern", ch: "南瓜燈", price: 15, category: "Decor" },
+  { id: 465, icon: "🎄", en: "Christmas Tree", ch: "聖誕樹", price: 50, category: "Decor" },
+  { id: 466, icon: "🎆", en: "Fireworks", ch: "煙火", price: 20, category: "Party" },
+  { id: 467, icon: "🎇", en: "Sparkler", ch: "仙女棒", price: 5, category: "Party" },
+  { id: 468, icon: "🧨", en: "Cracker", ch: "爆竹", price: 8, category: "Party" },
+  { id: 469, icon: "🎈", en: "Red Balloon", ch: "紅氣球", price: 2, category: "Party" },
+  { id: 470, icon: "🎉", en: "Confetti", ch: "彩帶", price: 5, category: "Party" },
+  { id: 471, icon: "🎊", en: "Confetti Ball", ch: "彩球", price: 10, category: "Party" },
+  { id: 472, icon: "🎋", en: "Tanabata Tree", ch: "許願樹", price: 20, category: "Decor" },
+  { id: 473, icon: "🎍", en: "Pine Decoration", ch: "門松", price: 25, category: "Decor" },
+  { id: 474, icon: "🎎", en: "Japanese Dolls", ch: "女兒節娃娃", price: 80, category: "Decor" },
+  { id: 475, icon: "🎏", en: "Carp", ch: "鯉魚旗", price: 15, category: "Decor" },
+  { id: 476, icon: "🎐", en: "Chime", ch: "風鈴", price: 12, category: "Decor" },
+  { id: 477, icon: "🎑", en: "Moon Viewing", ch: "賞月", price: 0, category: "Decor" },
+  { id: 478, icon: "🧧", en: "Red Packet", ch: "紅包", price: 10, category: "Misc" },
+  { id: 479, icon: "🎀", en: "Pink Ribbon", ch: "粉紅緞帶", price: 2, category: "Misc" },
+  { id: 480, icon: "🎁", en: "Wrapped Gift", ch: "禮物盒", price: 25, category: "Misc" },
+  { id: 481, icon: "🎗️", en: "Reminder Ribbon", ch: "黃絲帶", price: 1, category: "Misc" },
+  { id: 482, icon: "🎟️", en: "Admission Ticket", ch: "入場券", price: 15, category: "Misc" },
+  { id: 483, icon: "🎫", en: "Pass", ch: "通行證", price: 10, category: "Misc" },
+  { id: 484, icon: "🎖️", en: "Medal", ch: "勳章", price: 20, category: "Misc" },
+  { id: 485, icon: "🏆", en: "Trophy", ch: "獎盃", price: 50, category: "Misc" },
+  { id: 486, icon: "🏅", en: "Sports Medal", ch: "體育獎牌", price: 15, category: "Misc" },
+  { id: 487, icon: "🥇", en: "1st Place", ch: "第一名", price: 100, category: "Misc" },
+  { id: 488, icon: "🥈", en: "2nd Place", ch: "第二名", price: 80, category: "Misc" },
+  { id: 489, icon: "🥉", en: "3rd Place", ch: "第三名", price: 50, category: "Misc" },
+  { id: 490, icon: "⚽", en: "Soccer", ch: "足球", price: 20, category: "Sports" },
+  { id: 491, icon: "⚾", en: "Baseball", ch: "棒球", price: 15, category: "Sports" },
+  { id: 492, icon: "🥎", en: "Softball", ch: "壘球", price: 15, category: "Sports" },
+  { id: 493, icon: "🏀", en: "Basket Ball", ch: "籃球", price: 25, category: "Sports" },
+  { id: 494, icon: "🏐", en: "Volley Ball", ch: "排球", price: 20, category: "Sports" },
+  { id: 495, icon: "🏈", en: "American Football", ch: "美式足球", price: 30, category: "Sports" },
+  { id: 496, icon: "🏉", en: "Rugby", ch: "橄欖球", price: 30, category: "Sports" },
+  { id: 497, icon: "🎾", en: "Tennis", ch: "網球", price: 10, category: "Sports" },
+  { id: 498, icon: "🥏", en: "Frisbee", ch: "飛盤", price: 5, category: "Sports" },
+  { id: 499, icon: "🎳", en: "Bowling", ch: "保齡球", price: 40, category: "Sports" },
+  { id: 500, icon: "🏏", en: "Cricket", ch: "板球", price: 35, category: "Sports" },
+];
+
+export default function SupermarketRush() {
+  const [gameState, setGameState] = useState('menu'); // menu, playing, gameover, soldout
+  const [money, setMoney] = useState(0);
+  const [currentItem, setCurrentItem] = useState(null);
+  const [options, setOptions] = useState([]);
+  const [feedback, setFeedback] = useState(null); // null, 'correct', 'wrong', 'missed'
+  const [streak, setStreak] = useState(0);
+  const [timeLeft, setTimeLeft] = useState(60); 
+  const [customerIndex, setCustomerIndex] = useState(0);
+  
+  // 使用 useRef 來紀錄該回合開始的準確時間點
+  const startTimeRef = useRef(0);
+  // 使用 useRef 來紀錄已答對的商品 ID，避免閉包問題
+  const completedItemsRef = useRef(new Set());
+
+  // 初始化遊戲
+  const startGame = () => {
+    setMoney(100);
+    setStreak(0);
+    setTimeLeft(120); // 增加時間到 120 秒，因為商品變多了！
+    setGameState('playing');
+    setCustomerIndex(0);
+    completedItemsRef.current.clear(); // 清空已完成列表
+    generateNextRound();
+  };
+
+  // 產生下一題
+  const generateNextRound = useCallback(() => {
+    // 過濾出尚未答對的商品
+    const availableItems = MARKET_ITEMS.filter(item => !completedItemsRef.current.has(item.id));
+
+    // 如果所有商品都賣光了
+    if (availableItems.length === 0) {
+      setGameState('soldout');
+      return;
+    }
+
+    // 從剩下可用的商品中隨機選一個
+    const correctItem = availableItems[Math.floor(Math.random() * availableItems.length)];
+    
+    // 錯誤選項 (Distractors) 可以從所有商品中選，這樣混淆性比較高
+    const otherItems = MARKET_ITEMS.filter(item => item.id !== correctItem.id);
+    const shuffledOthers = otherItems.sort(() => 0.5 - Math.random());
+    const distractors = shuffledOthers.slice(0, 3);
+    const roundOptions = [correctItem, ...distractors].sort(() => 0.5 - Math.random());
+
+    setCurrentItem(correctItem);
+    setOptions(roundOptions);
+    setFeedback(null);
+    setCustomerIndex(prev => prev + 1);
+    
+    // 設定這一題的開始時間
+    startTimeRef.current = Date.now();
+  }, []);
+
+  // 這一局的計時器 (處理 Miss 邏輯 - 5秒)
+  useEffect(() => {
+    if (gameState !== 'playing' || feedback !== null || !currentItem) return;
+
+    const roundTimer = setTimeout(() => {
+        handleMiss();
+    }, 5000);
+
+    return () => clearTimeout(roundTimer);
+  }, [currentItem, feedback, gameState]);
+
+  // 倒數計時器 (遊戲總時間)
+  useEffect(() => {
+    if (gameState !== 'playing') return;
+    const timer = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) {
+          setGameState('gameover');
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [gameState]);
+
+  // 處理超時 (Miss)
+  const handleMiss = () => {
+      const penalty = 15;
+      setMoney(prev => Math.max(0, prev - penalty));
+      setStreak(0);
+      setFeedback({ type: 'missed', val: penalty, correctEn: currentItem.en, correctCh: currentItem.ch });
+      
+      // Miss 不算答對，所以不加入 completedItemsRef，下次還會出現
+      
+      setTimeout(() => {
+        generateNextRound();
+      }, 1500);
+  };
+
+  // 處理玩家回答
+  const handleAnswer = (selectedItem) => {
+    if (feedback !== null) return; 
+
+    if (selectedItem.id === currentItem.id) {
+      // --- 答對邏輯 ---
+      const now = Date.now();
+      const timeTaken = now - startTimeRef.current; // 花費毫秒數
+      
+      let timeMultiplier = 1;
+      const maxDuration = 5000; // 總時間 5秒
+      const gracePeriod = 2500; // 寬限期 2.5秒 (在此時間內答對皆為 100%)
+
+      // 超過寬限期才開始扣分
+      if (timeTaken > gracePeriod) {
+          const decayDuration = maxDuration - gracePeriod; // 剩下 2.5秒 用來遞減
+          const overflowTime = Math.min(timeTaken - gracePeriod, decayDuration);
+          
+          // 計算折扣比例
+          const decay = overflowTime / decayDuration;
+          timeMultiplier = 1 - decay;
+          
+          // 最低保底 10%
+          timeMultiplier = Math.max(0.1, timeMultiplier);
+      }
+
+      const baseProfit = Math.round(currentItem.price * timeMultiplier);
+      const streakBonus = Math.floor(streak / 5) * 2;
+      const totalProfit = baseProfit + streakBonus;
+      
+      setMoney(prev => prev + totalProfit);
+      setStreak(prev => prev + 1);
+      
+      // 加入已完成列表 (不重複出現)
+      completedItemsRef.current.add(currentItem.id);
+      
+      const percentage = Math.round(timeMultiplier * 100);
+      setFeedback({ type: 'correct', val: totalProfit, percentage: percentage });
+      
+      setTimeout(() => {
+        generateNextRound();
+      }, 1200);
+    } else {
+      // --- 答錯邏輯 ---
+      const penalty = 10;
+      setMoney(prev => Math.max(0, prev - penalty));
+      setStreak(0);
+      setFeedback({ type: 'wrong', val: penalty, correctEn: currentItem.en, correctCh: currentItem.ch });
+      
+      // 答錯也不加入 completedItemsRef，讓玩家有機會再練習一次
+      
+      setTimeout(() => {
+        generateNextRound();
+      }, 1500);
+    }
+  };
+
+  // UI 區塊
+
+  if (gameState === 'menu') {
+    return (
+      <div className="min-h-screen bg-sky-100 flex items-center justify-center font-sans p-4">
+        <div className="bg-white p-8 rounded-3xl shadow-xl max-w-sm w-full text-center border-b-8 border-sky-200">
+          <div className="w-24 h-24 bg-sky-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
+            <ShoppingBasket size={48} className="text-white" />
+          </div>
+          <h1 className="text-3xl font-black text-slate-800 mb-2">Supermarket Rush</h1>
+          <p className="text-slate-500 mb-8">5秒挑戰！<br/>2.5秒內答對獎金全拿！</p>
+          <button onClick={startGame} className="w-full bg-green-500 hover:bg-green-600 text-white font-bold text-xl py-4 rounded-xl shadow-lg transform transition active:scale-95 flex items-center justify-center gap-2">
+            開始上班 (Start)
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // 共用的遊戲結束/完售畫面
+  if (gameState === 'gameover' || gameState === 'soldout') {
+    return (
+      <div className="min-h-screen bg-slate-800 flex items-center justify-center font-sans p-4">
+        <div className="bg-white p-8 rounded-3xl shadow-2xl max-w-sm w-full text-center animate-in zoom-in duration-300 relative overflow-hidden">
+          {/* 彩帶特效 (僅完售時顯示) */}
+          {gameState === 'soldout' && <div className="absolute inset-0 bg-yellow-100/20 pointer-events-none"></div>}
+          
+          <div className="text-6xl mb-4">{gameState === 'soldout' ? '🏆' : '🏪'}</div>
+          
+          <h2 className="text-2xl font-bold text-slate-800 mb-2">
+            {gameState === 'soldout' ? '所有商品完售！' : '今日營業結束!'}
+          </h2>
+          
+          <p className="text-slate-500 mb-6">
+             {gameState === 'soldout' ? '太厲害了！你清空了所有庫存！' : '時間到了，明天請早！'}
+          </p>
+
+          <div className="bg-slate-100 p-4 rounded-xl mb-6">
+            <p className="text-slate-500 text-sm">總收入 (Total Revenue)</p>
+            <p className="text-4xl font-black text-green-600">${money}</p>
+          </div>
+          <button onClick={startGame} className="w-full bg-sky-500 hover:bg-sky-600 text-white font-bold py-3 rounded-xl shadow-lg flex items-center justify-center gap-2">
+            <RefreshCcw size={20} /> 再玩一次
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // 計算商品容器的樣式
+  const getItemContainerStyle = () => {
+    let baseClass = "w-40 h-40 flex flex-col items-center justify-center relative transition-all duration-200 ";
+    
+    if (feedback?.type === 'wrong') {
+      return baseClass + "bg-red-100/80 rounded-full shadow-lg ring-4 ring-red-400";
+    }
+    if (feedback?.type === 'correct') {
+      return baseClass + "bg-green-100/80 rounded-full shadow-lg ring-4 ring-green-400";
+    }
+    
+    return baseClass;
+  };
+
+  // 計算商品的動畫 Class
+  const getItemAnimationClass = () => {
+    if (feedback?.type === 'correct') return 'animate-zoom-out-left'; 
+    if (feedback?.type === 'wrong') return 'shake'; 
+    if (feedback?.type === 'missed') return 'opacity-0'; 
+    return 'animate-move-across'; 
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-200 flex flex-col font-sans max-w-md mx-auto shadow-2xl overflow-hidden relative border-x border-slate-300">
+      
+      {/* HUD */}
+      <div className="bg-slate-800 text-white p-4 flex justify-between items-center z-10 shadow-md">
+        <div className="flex flex-col">
+          <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">Revenue</span>
+          <div className="flex items-center text-green-400 font-mono font-bold text-2xl">
+            <DollarSign size={20} />
+            {money}
+          </div>
+        </div>
+        <div className="flex flex-col items-center">
+           <span className="text-xs text-slate-400">Time</span>
+           <span className={`font-bold text-xl ${timeLeft < 10 ? 'text-red-500 animate-pulse' : 'text-white'}`}>
+             {timeLeft}s
+           </span>
+        </div>
+        <div className="flex flex-col items-end">
+          <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">Streak</span>
+          <div className="flex items-center text-orange-400 font-bold text-xl">
+            <TrendingUp size={16} className="mr-1" />
+            x{streak}
+          </div>
+        </div>
+      </div>
+
+      {/* 遊戲場景：櫃檯區 */}
+      <div className="flex-1 bg-sky-50 relative flex flex-col justify-center overflow-hidden">
+        
+        {/* 背景裝飾 */}
+        <div className="absolute top-4 left-4 opacity-10 pointer-events-none">
+            <div className="w-24 h-4 bg-slate-800 rounded mb-2"></div>
+            <div className="w-24 h-4 bg-slate-800 rounded mb-2"></div>
+        </div>
+        <div className="absolute top-4 right-4 opacity-10 pointer-events-none">
+            <div className="w-24 h-4 bg-slate-800 rounded mb-2"></div>
+            <div className="w-24 h-4 bg-slate-800 rounded mb-2"></div>
+        </div>
+
+        {/* 顧客 (左上角) */}
+        <div className="absolute top-6 left-6 flex flex-col items-center transition-all duration-500 z-0 opacity-50">
+           <div className="bg-white p-2 rounded-full shadow-sm border-2 border-slate-100">
+             <User size={30} className="text-slate-400" />
+           </div>
+        </div>
+
+        {/* 輸送帶 (視覺層) - 紋理動畫向左 */}
+        <div className="w-full h-40 bg-slate-300 absolute bottom-0 flex items-center justify-center border-t-4 border-slate-400">
+            <div className="absolute inset-0 flex space-x-12 animate-slide-left opacity-20">
+                {[...Array(10)].map((_, i) => (
+                    <div key={i} className="w-2 h-full bg-slate-500 transform skew-x-12"></div>
+                ))}
+            </div>
+        </div>
+
+        {/* 商品移動軌道 (邏輯層) */}
+        {/* key=currentItem.id 確保切換商品時重置動畫 */}
+        <div key={currentItem?.id} className={`absolute w-full flex items-center z-10 ${getItemAnimationClass()}`}>
+            
+            {/* 商品本體 */}
+            <div className={getItemContainerStyle()}>
+                {/* 圖示 */}
+                <span className="text-8xl drop-shadow-lg filter leading-none transform transition-transform hover:scale-110">{currentItem?.icon}</span>
+                
+                {/* 價格標籤 */}
+                <span className="absolute -top-2 -right-2 bg-yellow-400 text-yellow-900 font-bold px-2 py-1 rounded text-sm shadow-md rotate-12 border border-yellow-200">
+                ${currentItem?.price}
+                </span>
+
+                {/* 錯誤提示層 */}
+                {feedback?.type === 'wrong' && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center z-20">
+                        <XCircle size={64} className="text-red-600 drop-shadow-md animate-ping" />
+                    </div>
+                )}
+
+                {/* 正確提示層 (顯示正確答案 + 效率百分比) */}
+                {feedback?.type === 'correct' && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center z-20">
+                        <CheckCircle size={40} className="text-green-600 mb-1 drop-shadow-md" />
+                        <span className="text-green-900 font-black text-2xl tracking-tight drop-shadow-sm">{currentItem?.en}</span>
+                        <span className="text-green-700 font-bold text-lg drop-shadow-sm">{currentItem?.ch}</span>
+                        {/* 顯示時間效率獎勵 */}
+                        {feedback.percentage < 100 && (
+                          <span className="bg-yellow-100 text-yellow-800 text-xs font-bold px-2 py-0.5 rounded-full mt-1 border border-yellow-200">
+                            Speed: {feedback.percentage}%
+                          </span>
+                        )}
+                        {feedback.percentage === 100 && (
+                          <span className="bg-red-100 text-red-600 text-xs font-black px-2 py-0.5 rounded-full mt-1 border border-red-200 animate-pulse">
+                            PERFECT!
+                          </span>
+                        )}
+                    </div>
+                )}
+            </div>
+        </div>
+
+        {/* Missed Feedback Overlay (當物品消失後顯示在畫面中央) */}
+        {feedback?.type === 'missed' && (
+             <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 z-30 animate-in fade-in duration-200 backdrop-blur-sm">
+                <div className="bg-white p-6 rounded-3xl shadow-2xl flex flex-col items-center transform scale-110">
+                    <AlertCircle size={48} className="text-red-500 mb-2" />
+                    <h3 className="text-red-600 font-black text-2xl uppercase tracking-wider mb-2">Missed!</h3>
+                    <div className="bg-slate-100 px-6 py-3 rounded-xl w-full text-center">
+                        <p className="text-4xl mb-2">{currentItem?.icon}</p>
+                        <p className="text-slate-800 font-bold text-xl">{currentItem?.en}</p>
+                        <p className="text-slate-500 text-sm">{currentItem?.ch}</p>
+                    </div>
+                    <p className="text-red-500 font-bold mt-4 animate-pulse">-${feedback.val}</p>
+                </div>
+             </div>
+        )}
+
+        {/* 錯誤回饋 Overlay (當點選錯誤時，顯示正確答案在中央) */}
+        {feedback?.type === 'wrong' && (
+             <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/20 z-30 animate-in fade-in duration-200">
+                <div className="bg-white/90 p-4 rounded-2xl shadow-xl flex flex-col items-center backdrop-blur-md">
+                    <XCircle size={32} className="text-red-500 mb-2" />
+                    <p className="text-slate-800 font-bold text-lg">{currentItem?.en}</p>
+                    <p className="text-slate-500 text-sm">{currentItem?.ch}</p>
+                    <p className="text-red-500 font-bold mt-2">-${feedback.val}</p>
+                </div>
+             </div>
+        )}
+
+        {/* 浮動的金額文字 (正確時) */}
+        {feedback?.type === 'correct' && (
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-32 text-5xl font-black animate-float-up z-20 text-green-500">
+             +${feedback.val}
+          </div>
+        )}
+
+      </div>
+
+      {/* 收銀機按鈕 */}
+      <div className="bg-white p-6 pb-8 rounded-t-3xl shadow-[0_-5px_20px_rgba(0,0,0,0.1)] z-20">
+        <div className="flex items-center gap-2 mb-4 text-slate-400 text-sm font-bold uppercase tracking-wider">
+           <ShoppingCart size={14} /> Quick Select
+        </div>
+        
+        <div className="grid grid-cols-2 gap-3">
+          {options.map((option, index) => (
+            <button
+              key={index}
+              onClick={() => handleAnswer(option)}
+              disabled={feedback !== null}
+              className={`
+                h-16 rounded-xl font-bold text-lg transition-all transform active:scale-95 shadow-sm border-b-4 
+                ${feedback !== null 
+                    ? (option.id === currentItem.id 
+                        ? 'bg-green-500 border-green-700 text-white'
+                        : 'bg-gray-100 border-gray-200 text-gray-300')
+                    : 'bg-slate-100 border-slate-300 text-slate-700 hover:bg-sky-50 hover:border-sky-300 hover:text-sky-700'
+                }
+              `}
+            >
+              {option.en}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <style>{`
+        /* 輸送帶紋理動畫 (向左流動) */
+        @keyframes slide-left {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50px); }
+        }
+        .animate-slide-left {
+          animation: slide-left 1s linear infinite;
+        }
+
+        /* 商品移動動畫：從右側 (110%) 移到左側 (-40%)，耗時 5 秒 */
+        @keyframes move-across {
+          0% { left: 110%; transform: rotate(5deg); }
+          50% { transform: rotate(-5deg); }
+          100% { left: -40%; transform: rotate(5deg); }
+        }
+        .animate-move-across {
+          animation: move-across 5s linear forwards;
+        }
+
+        /* 答對飛出動畫 (往左飛走) */
+        @keyframes zoom-out-left {
+          0% { transform: scale(1) translateX(0); opacity: 1; }
+          100% { transform: scale(0.5) translateX(-100vw); opacity: 0; }
+        }
+        .animate-zoom-out-left {
+          animation: zoom-out-left 0.6s ease-in forwards;
+        }
+
+        /* 浮動文字 */
+        @keyframes float-up {
+          0% { transform: translate(-50%, -8rem) scale(0.8); opacity: 0; }
+          20% { transform: translate(-50%, -9rem) scale(1.2); opacity: 1; }
+          100% { transform: translate(-50%, -12rem) scale(1); opacity: 0; }
+        }
+        .animate-float-up {
+          animation: float-up 0.8s ease-out forwards;
+        }
+
+        /* 錯誤震動 */
+        .shake {
+          animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+        }
+      `}</style>
+    </div>
+  );
+}
